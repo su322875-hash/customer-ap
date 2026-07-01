@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1e3a5f">
+<title>보험 고객 관리</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --blue:#1e3a5f;--blue-mid:#2563eb;--blue-light:#3b82f6;
+  --accent:#0ea5e9;--accent2:#7c3aed;
+  --bg:#f1f5f9;--card:#fff;--border:#e2e8f0;
+  --text:#1e293b;--text2:#64748b;--text3:#94a3b8;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-border:#bbf7d0;
+  --yellow:#d97706;--yellow-bg:#fffbeb;--yellow-border:#fde68a;
+  --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;
+  --purple:#7c3aed;--purple-bg:#f5f3ff;--purple-border:#ddd6fe;
+  --gray:#6b7280;--gray-bg:#f9fafb;--gray-border:#e5e7eb;
+  --shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -2px rgba(0,0,0,.05);
+  --radius:12px;--radius-sm:8px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ── 앱 헤더 ── */
+.app-header{background:var(--blue);color:#fff;padding:0;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.header-top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px}
+.header-title{font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px}
+.header-title span{font-size:20px}
+.header-count{font-size:12px;opacity:.7;margin-top:1px}
+.header-btns{display:flex;gap:8px}
+.btn-icon{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.btn-icon:hover,.btn-icon:active{background:rgba(255,255,255,.28)}
+.search-bar{padding:0 16px 12px;display:flex;gap:8px}
+.search-input{flex:1;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;color:#fff;padding:8px 14px;font-size:14px;outline:none;font-family:inherit}
+.search-input::placeholder{color:rgba(255,255,255,.55)}
+.search-input:focus{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.5)}
+
+/* ── 필터 탭 ── */
+.filter-tabs{display:flex;gap:6px;padding:12px 16px 4px;overflow-x:auto;scrollbar-width:none}
+.filter-tabs::-webkit-scrollbar{display:none}
+.filter-tab{flex-shrink:0;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap}
+.filter-tab.active{background:var(--blue-mid);border-color:var(--blue-mid);color:#fff}
+
+/* ── 고객 목록 ── */
+.list-area{padding:10px 16px 100px}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-state .empty-icon{font-size:52px;margin-bottom:14px}
+.empty-state p{font-size:14px;line-height:1.6}
+.customer-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;cursor:pointer;transition:transform .1s,box-shadow .1s;border:1px solid var(--border)}
+.customer-card:active{transform:scale(.985)}
+.card-main{padding:14px 16px 12px;display:flex;align-items:flex-start;gap:12px}
+.card-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--blue-mid),var(--accent));color:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card-info{flex:1;min-width:0}
+.card-name{font-size:16px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:7px}
+.card-name-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status-badge{flex-shrink:0;font-size:10px;font-weight:700;border-radius:10px;padding:2px 8px;border:1px solid}
+.s-예정{background:var(--yellow-bg);color:var(--yellow);border-color:var(--yellow-border)}
+.s-진행중{background:var(--blue-light);color:#fff;border-color:var(--blue-light)}
+.s-계약{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.s-보류{background:var(--gray-bg);color:var(--gray);border-color:var(--gray-border)}
+.card-sub{font-size:13px;color:var(--text2);margin-top:3px;display:flex;align-items:center;gap:6px}
+.card-sub .dot{color:var(--border)}
+.card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.tag{font-size:11px;background:var(--purple-bg);color:var(--purple);border-radius:6px;padding:2px 8px;font-weight:600}
+.card-meta{padding:8px 16px;background:#fafbff;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text3)}
+.card-meta-item{display:flex;align-items:center;gap:4px}
+.card-date{margin-left:auto;font-size:11px;color:var(--text3)}
+
+/* ── FAB 버튼 ── */
+.fab{position:fixed;bottom:24px;right:20px;width:56px;height:56px;background:linear-gradient(135deg,var(--blue-mid),var(--accent));border:none;border-radius:50%;color:#fff;font-size:28px;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.5);display:flex;align-items:center;justify-content:center;z-index:90;transition:transform .15s,box-shadow .15s}
+.fab:active{transform:scale(.92);box-shadow:0 2px 8px rgba(37,99,235,.4)}
+
+/* ── 슬라이드 패널 (상세/폼) ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s}
+.overlay.show{opacity:1;pointer-events:auto}
+.panel{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-radius:20px 20px 0 0;z-index:201;max-height:95vh;overflow-y:auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
+.panel.show{transform:translateY(0)}
+.panel-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 4px}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:8px 20px 16px}
+.panel-title{font-size:17px;font-weight:800;color:var(--text)}
+.panel-close{background:var(--bg);border:none;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+
+/* ── 상세 패널 ── */
+.detail-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--blue-mid),var(--accent));color:#fff;font-size:28px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.detail-name{text-align:center;font-size:22px;font-weight:800;color:var(--text)}
+.detail-status{text-align:center;margin:8px 0 20px}
+.detail-section{margin:0 20px 20px;background:var(--bg);border-radius:var(--radius);overflow:hidden}
+.detail-row{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.detail-row:last-child{border-bottom:none}
+.detail-label{font-size:12px;color:var(--text3);font-weight:600;width:72px;flex-shrink:0;padding-top:1px}
+.detail-value{font-size:14px;color:var(--text);flex:1;line-height:1.5;word-break:break-all}
+.detail-value.phone{color:var(--blue-mid);font-weight:600}
+.detail-value.memo{white-space:pre-wrap;color:var(--text2)}
+.detail-tags{display:flex;flex-wrap:wrap;gap:5px}
+.detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px 30px}
+.btn-action{border:none;border-radius:var(--radius-sm);padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn-edit-a{background:var(--blue-mid);color:#fff}
+.btn-del-a{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+
+/* ── 입력 폼 ── */
+.form-body{padding:0 20px 30px;display:flex;flex-direction:column;gap:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+.form-input,.form-textarea,.form-select{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:11px 14px;font-size:15px;outline:none;font-family:inherit;width:100%;transition:border-color .15s}
+.form-input:focus,.form-textarea:focus,.form-select:focus{border-color:var(--blue-mid);background:#fff}
+.form-textarea{resize:none;min-height:90px;line-height:1.5}
+.form-select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-hint{font-size:11px;color:var(--text3);margin-top:2px}
+.form-submit{background:linear-gradient(135deg,var(--blue-mid),var(--blue-light));color:#fff;border:none;border-radius:var(--radius-sm);padding:15px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px;width:100%;transition:opacity .15s}
+.form-submit:active{opacity:.85}
+
+/* 관심 상품 체크박스 그리드 */
+.product-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.product-chip{display:flex;align-items:center;gap:7px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);transition:all .15s;user-select:none}
+.product-chip.selected{background:var(--purple-bg);border-color:var(--purple);color:var(--purple)}
+.product-chip-check{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-size:11px}
+.product-chip.selected .product-chip-check{background:var(--purple);border-color:var(--purple);color:#fff}
+
+/* ── 토스트 ── */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e293b;color:#fff;border-radius:20px;padding:10px 20px;font-size:13px;font-weight:600;z-index:400;opacity:0;transition:all .3s;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── 앱 설치 안내 ── */
+.install-banner{background:linear-gradient(135deg,#0f172a,#1e3a5f);color:#fff;margin:12px 16px;border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;gap:12px;font-size:12px;cursor:pointer}
+.install-banner .install-icon{font-size:24px;flex-shrink:0}
+.install-banner .install-text{flex:1;line-height:1.5}
+.install-banner .install-text strong{display:block;margin-bottom:2px;font-size:13px}
+.install-banner .install-close{opacity:.6;font-size:18px;flex-shrink:0}
+
+/* 정렬 */
+.sort-bar{display:flex;align-items:center;gap:8px;padding:8px 16px 4px;font-size:12px;color:var(--text3)}
+.sort-btn{background:none;border:none;font-size:12px;color:var(--text3);cursor:pointer;padding:4px 8px;border-radius:6px;font-family:inherit;font-weight:600}
+.sort-btn.active{color:var(--blue-mid);background:rgba(37,99,235,.1)}
+</style>
+</head>
+<body>
+
+<!-- 앱 헤더 -->
+<div class="app-header">
+  <div class="header-top">
+    <div>
+      <div class="header-title"><span>🛡️</span> 보험 고객 관리</div>
+      <div class="header-count" id="headerCount">고객 0명</div>
+    </div>
+    <div class="header-btns">
+      <button class="btn-icon" onclick="exportData()" title="내보내기">📤</button>
+      <button class="btn-icon" onclick="importData()" title="가져오기">📥</button>
+    </div>
+  </div>
+  <div class="search-bar">
+    <input class="search-input" id="searchInput" type="search" placeholder="🔍 이름, 연락처, 상품 검색..." oninput="renderList()" autocomplete="off">
+  </div>
+</div>
+
+<!-- 필터 탭 -->
+<div class="filter-tabs">
+  <div class="filter-tab active" data-filter="전체" onclick="setFilter(this)">전체</div>
+  <div class="filter-tab" data-filter="상담예정" onclick="setFilter(this)">📅 상담예정</div>
+  <div class="filter-tab" data-filter="진행중" onclick="setFilter(this)">🔄 진행중</div>
+  <div class="filter-tab" data-filter="계약완료" onclick="setFilter(this)">✅ 계약완료</div>
+  <div class="filter-tab" data-filter="보류" onclick="setFilter(this)">⏸ 보류</div>
+</div>
+
+<!-- 정렬 -->
+<div class="sort-bar">
+  <span>정렬:</span>
+  <button class="sort-btn active" data-sort="recent" onclick="setSort(this)">최근순</button>
+  <button class="sort-btn" data-sort="name" onclick="setSort(this)">이름순</button>
+  <button class="sort-btn" data-sort="date" onclick="setSort(this)">상담일순</button>
+</div>
+
+<!-- 앱 설치 안내 (한 번만 표시) -->
+<div class="install-banner" id="installBanner" onclick="hideInstall()">
+  <span class="install-icon">📱</span>
+  <div class="install-text">
+    <strong>앱처럼 사용하기</strong>
+    크롬 브라우저 → 메뉴(⋮) → "홈 화면에 추가" 하면 앱처럼 설치돼요!
+  </div>
+  <span class="install-close" onclick="hideInstall()">✕</span>
+</div>
+
+<!-- 고객 목록 -->
+<div class="list-area" id="listArea"></div>
+
+<!-- FAB 버튼 -->
+<button class="fab" onclick="openAddForm()">＋</button>
+
+<!-- 오버레이 -->
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+
+<!-- 상세 패널 -->
+<div class="panel" id="detailPanel">
+  <div class="panel-handle"></div>
+  <div class="panel-header">
+    <span class="panel-title">고객 정보</span>
+    <button class="panel-close" onclick="closePanel()">✕</button>
+  </div>
+  <div id="detailBody"></div>
+</div>
+
+<!-- 추가/수정 폼 패널 -->
+<div class="panel" id="formPanel">
+  <div class="panel-handle"></div>
+  <div class="panel-header">
+    <span class="panel-title" id="formTitle">고객 추가</span>
+    <button class="panel-close" onclick="closePanel()">✕</button>
+  </div>
+  <div class="form-body">
+    <input type="hidden" id="fId">
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">고객명 *</label>
+        <input class="form-input" id="fName" placeholder="홍길동" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">성별</label>
+        <select class="form-select" id="fGender">
+          <option value="">선택</option>
+          <option value="남">남성</option>
+          <option value="여">여성</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">연락처</label>
+      <input class="form-input" id="fPhone" type="tel" placeholder="010-0000-0000" oninput="formatPhone(this)">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">생년월일</label>
+        <input class="form-input" id="fBirth" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">직업</label>
+        <input class="form-input" id="fJob" placeholder="직장인, 자영업...">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">상담 상태</label>
+      <select class="form-select" id="fStatus">
+        <option value="상담예정">📅 상담예정</option>
+        <option value="진행중">🔄 진행중</option>
+        <option value="계약완료">✅ 계약완료</option>
+        <option value="보류">⏸ 보류</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">상담 예정일</label>
+      <input class="form-input" id="fDate" type="date">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">관심 보험 상품</label>
+      <div class="product-grid" id="productGrid">
+        <div class="product-chip" data-product="종신보험" onclick="toggleProduct(this)"><span class="product-chip-check"></span>종신보험</div>
+        <div class="product-chip" data-product="건강보험" onclick="toggleProduct(this)"><span class="product-chip-check">✓</span>건강보험</div>
+        <div class="product-chip" data-product="암보험" onclick="toggleProduct(this)"><span class="product-chip-check"></span>암보험</div>
+        <div class="product-chip" data-product="실손보험" onclick="toggleProduct(this)"><span class="product-chip-check"></span>실손보험</div>
+        <div class="product-chip" data-product="연금보험" onclick="toggleProduct(this)"><span class="product-chip-check"></span>연금보험</div>
+        <div class="product-chip" data-product="저축보험" onclick="toggleProduct(this)"><span class="product-chip-check"></span>저축보험</div>
+        <div class="product-chip" data-product="어린이보험" onclick="toggleProduct(this)"><span class="product-chip-check"></span>어린이보험</div>
+        <div class="product-chip" data-product="운전자보험" onclick="toggleProduct(this)"><span class="product-chip-check"></span>운전자보험</div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <input class="form-input" id="fProductOther" placeholder="기타 상품 직접 입력" style="flex:1">
+        <button onclick="addCustomProduct()" style="background:var(--blue-mid);border:none;color:#fff;border-radius:8px;padding:0 14px;font-size:13px;cursor:pointer;flex-shrink:0;font-family:inherit">추가</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">메모</label>
+      <textarea class="form-textarea" id="fMemo" placeholder="상담 내용, 특이사항, 가족 구성원 등 자유롭게 기록하세요..."></textarea>
+    </div>
+
+    <button class="form-submit" onclick="saveCustomer()">저장하기</button>
+  </div>
+</div>
+
+<!-- 토스트 -->
+<div class="toast" id="toast"></div>
+
+<!-- 숨겨진 파일 입력 -->
+<input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(this)">
+
+<script>
+const STORAGE_KEY = 'insurance_customers_v1'
+let customers = []
+let currentFilter = '전체'
+let currentSort = 'recent'
+let editingId = null
+
+// 초기화
+function init() {
+  try { customers = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [] } catch { customers = [] }
+  if (!localStorage.getItem('install_banner_shown')) {
+    document.getElementById('installBanner').style.display = 'flex'
+  } else {
+    document.getElementById('installBanner').style.display = 'none'
+  }
+  renderList()
+}
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(customers)) }
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6) }
+
+function formatPhone(input) {
+  let v = input.value.replace(/\D/g,'')
+  if (v.length <= 3) input.value = v
+  else if (v.length <= 7) input.value = v.slice(0,3)+'-'+v.slice(3)
+  else input.value = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11)
+}
+
+function today() { return new Date().toISOString().slice(0,10) }
+
+function fmtDate(d) {
+  if (!d) return ''
+  const parts = d.split('-')
+  if (parts.length!==3) return d
+  return `${parts[0]}. ${parts[1]}. ${parts[2]}.`
+}
+
+function getAge(birth) {
+  if (!birth) return ''
+  const b = new Date(birth), now = new Date()
+  let age = now.getFullYear() - b.getFullYear()
+  const m = now.getMonth() - b.getMonth()
+  if (m < 0 || (m===0 && now.getDate()<b.getDate())) age--
+  return age + '세'
+}
+
+function getStatusClass(s) {
+  if (s==='상담예정') return 's-예정'
+  if (s==='진행중') return 's-진행중'
+  if (s==='계약완료') return 's-계약'
+  return 's-보류'
+}
+
+function getInitial(name) { return name ? name[0] : '?' }
+
+// ── 렌더링 ──
+function renderList() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim()
+  let list = customers.filter(c => {
+    if (currentFilter !== '전체' && c.status !== currentFilter) return false
+    if (!q) return true
+    return (c.name||'').toLowerCase().includes(q)
+      || (c.phone||'').includes(q)
+      || (c.products||[]).some(p=>p.toLowerCase().includes(q))
+      || (c.memo||'').toLowerCase().includes(q)
+      || (c.job||'').toLowerCase().includes(q)
+  })
+
+  list = [...list].sort((a,b)=>{
+    if (currentSort==='name') return (a.name||'').localeCompare(b.name||'','ko')
+    if (currentSort==='date') {
+      if (!a.consultDate && !b.consultDate) return 0
+      if (!a.consultDate) return 1
+      if (!b.consultDate) return -1
+      return a.consultDate.localeCompare(b.consultDate)
+    }
+    return (b.createdAt||0) - (a.createdAt||0)
+  })
+
+  document.getElementById('headerCount').textContent = `고객 ${customers.length}명`
+
+  const area = document.getElementById('listArea')
+  if (list.length === 0) {
+    area.innerHTML = `<div class="empty-state"><div class="empty-icon">${q ? '🔍' : '📋'}</div><p>${q ? `"${q}"에 해당하는 고객이 없습니다.` : '아직 등록된 고객이 없습니다.<br>+ 버튼을 눌러 첫 고객을 추가하세요!'}</p></div>`
+    return
+  }
+
+  area.innerHTML = list.map(c => {
+    const products = (c.products||[]).slice(0,3)
+    const moreProd = (c.products||[]).length > 3
+    const tags = products.map(p=>`<span class="tag">${p}</span>`).join('')+(moreProd?`<span class="tag">+${(c.products.length-3)}</span>`:'')
+    const dDay = c.consultDate ? getDDay(c.consultDate) : ''
+    return `<div class="customer-card" onclick="openDetail('${c.id}')">
+      <div class="card-main">
+        <div class="card-avatar">${getInitial(c.name)}</div>
+        <div class="card-info">
+          <div class="card-name">
+            <span class="card-name-text">${c.name||'이름없음'}</span>
+            <span class="status-badge ${getStatusClass(c.status)}">${c.status||'미설정'}</span>
+          </div>
+          <div class="card-sub">
+            ${c.gender ? `<span>${c.gender==='남'?'👨':'👩'} ${c.gender}</span>` : ''}
+            ${c.gender && (c.birth||c.phone) ? `<span class="dot">·</span>` : ''}
+            ${c.birth ? `<span>${getAge(c.birth)}</span>` : ''}
+            ${c.birth && c.phone ? `<span class="dot">·</span>` : ''}
+            ${c.phone ? `<span>📞 ${c.phone}</span>` : ''}
+          </div>
+          ${tags ? `<div class="card-tags">${tags}</div>` : ''}
+        </div>
+      </div>
+      ${(c.consultDate || c.memo) ? `<div class="card-meta">
+        ${c.consultDate ? `<span class="card-meta-item">📅 ${fmtDate(c.consultDate)}${dDay ? ` <strong style="color:${dDay.startsWith('D-')?'var(--red)':'var(--text3)'}">${dDay}</strong>` : ''}</span>` : ''}
+        ${c.memo ? `<span class="card-meta-item" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📝 ${c.memo.split('\n')[0]}</span>` : ''}
+      </div>` : ''}
+    </div>`
+  }).join('')
+}
+
+function getDDay(dateStr) {
+  const diff = Math.ceil((new Date(dateStr) - new Date(today())) / 86400000)
+  if (diff < 0) return `D+${Math.abs(diff)}`
+  if (diff === 0) return 'D-Day'
+  return `D-${diff}`
+}
+
+// ── 상세 보기 ──
+function openDetail(id) {
+  const c = customers.find(x=>x.id===id)
+  if (!c) return
+
+  const body = document.getElementById('detailBody')
+  const products = (c.products||[]).map(p=>`<span class="tag" style="font-size:13px;padding:4px 10px">${p}</span>`).join('')
+
+  body.innerHTML = `
+    <div class="detail-avatar">${getInitial(c.name)}</div>
+    <div class="detail-name">${c.name||'이름없음'} ${c.gender?`<span style="font-size:15px;color:var(--text3)">${c.gender}</span>`:''}</div>
+    <div class="detail-status"><span class="status-badge ${getStatusClass(c.status)}" style="font-size:13px;padding:4px 14px">${c.status||'미설정'}</span></div>
+    <div class="detail-section">
+      ${c.phone?`<div class="detail-row"><span class="detail-label">📞 연락처</span><a href="tel:${c.phone}" class="detail-value phone">${c.phone}</a></div>`:''}
+      ${c.birth?`<div class="detail-row"><span class="detail-label">🎂 생년월일</span><span class="detail-value">${fmtDate(c.birth)} (${getAge(c.birth)})</span></div>`:''}
+      ${c.job?`<div class="detail-row"><span class="detail-label">💼 직업</span><span class="detail-value">${c.job}</span></div>`:''}
+      ${c.consultDate?`<div class="detail-row"><span class="detail-label">📅 상담일정</span><span class="detail-value">${fmtDate(c.consultDate)} <strong style="color:var(--blue-mid)">${getDDay(c.consultDate)}</strong></span></div>`:''}
+    </div>
+    ${products?`<div style="padding:0 20px 16px">
+      <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">관심 보험 상품</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${products}</div>
+    </div>`:''}
+    ${c.memo?`<div class="detail-section" style="margin-bottom:16px">
+      <div class="detail-row"><span class="detail-label">📝 메모</span><span class="detail-value memo">${c.memo}</span></div>
+    </div>`:''}
+    <div class="detail-actions">
+      <button class="btn-action btn-edit-a" onclick="openEditForm('${id}')">✏️ 수정</button>
+      <button class="btn-action btn-del-a" onclick="deleteCustomer('${id}')">🗑️ 삭제</button>
+    </div>
+    <div style="height:10px"></div>
+  `
+  openPanel('detailPanel')
+}
+
+// ── 추가/수정 폼 ──
+function openAddForm() {
+  editingId = null
+  document.getElementById('formTitle').textContent = '고객 추가'
+  clearForm()
+  openPanel('formPanel')
+}
+
+function openEditForm(id) {
+  const c = customers.find(x=>x.id===id)
+  if (!c) return
+  editingId = id
+  document.getElementById('formTitle').textContent = '고객 수정'
+  closePanel()
+  setTimeout(() => {
+    fillForm(c)
+    openPanel('formPanel')
+  }, 300)
+}
+
+function clearForm() {
+  document.getElementById('fId').value = ''
+  document.getElementById('fName').value = ''
+  document.getElementById('fGender').value = ''
+  document.getElementById('fPhone').value = ''
+  document.getElementById('fBirth').value = ''
+  document.getElementById('fJob').value = ''
+  document.getElementById('fStatus').value = '상담예정'
+  document.getElementById('fDate').value = ''
+  document.getElementById('fMemo').value = ''
+  document.getElementById('fProductOther').value = ''
+  document.querySelectorAll('.product-chip').forEach(el => {
+    el.classList.remove('selected')
+    el.querySelector('.product-chip-check').textContent = ''
+  })
+}
+
+function fillForm(c) {
+  document.getElementById('fId').value = c.id
+  document.getElementById('fName').value = c.name||''
+  document.getElementById('fGender').value = c.gender||''
+  document.getElementById('fPhone').value = c.phone||''
+  document.getElementById('fBirth').value = c.birth||''
+  document.getElementById('fJob').value = c.job||''
+  document.getElementById('fStatus').value = c.status||'상담예정'
+  document.getElementById('fDate').value = c.consultDate||''
+  document.getElementById('fMemo').value = c.memo||''
+  document.getElementById('fProductOther').value = ''
+
+  const baseProducts = ['종신보험','건강보험','암보험','실손보험','연금보험','저축보험','어린이보험','운전자보험']
+  document.querySelectorAll('.product-chip').forEach(el => {
+    const p = el.dataset.product
+    if ((c.products||[]).includes(p)) {
+      el.classList.add('selected')
+      el.querySelector('.product-chip-check').textContent = '✓'
+    } else {
+      el.classList.remove('selected')
+      el.querySelector('.product-chip-check').textContent = ''
+    }
+  })
+  // 커스텀 상품
+  const customs = (c.products||[]).filter(p => !baseProducts.includes(p))
+  if (customs.length) {
+    customs.forEach(p => addCustomChip(p, true))
+  }
+}
+
+function toggleProduct(el) {
+  el.classList.toggle('selected')
+  el.querySelector('.product-chip-check').textContent = el.classList.contains('selected') ? '✓' : ''
+}
+
+function addCustomProduct() {
+  const val = document.getElementById('fProductOther').value.trim()
+  if (!val) return
+  addCustomChip(val, true)
+  document.getElementById('fProductOther').value = ''
+}
+
+function addCustomChip(name, selected) {
+  const grid = document.getElementById('productGrid')
+  // 이미 있으면 선택만
+  const existing = [...grid.querySelectorAll('.product-chip')].find(el => el.dataset.product === name)
+  if (existing) { if (selected) { existing.classList.add('selected'); existing.querySelector('.product-chip-check').textContent='✓' } return }
+  const el = document.createElement('div')
+  el.className = 'product-chip' + (selected ? ' selected' : '')
+  el.dataset.product = name
+  el.onclick = () => toggleProduct(el)
+  el.innerHTML = `<span class="product-chip-check">${selected?'✓':''}</span>${name}`
+  grid.appendChild(el)
+}
+
+function getSelectedProducts() {
+  return [...document.querySelectorAll('.product-chip.selected')].map(el => el.dataset.product)
+}
+
+function saveCustomer() {
+  const name = document.getElementById('fName').value.trim()
+  if (!name) { showToast('고객명을 입력해주세요'); return }
+
+  const data = {
+    id: editingId || uid(),
+    name,
+    gender: document.getElementById('fGender').value,
+    phone: document.getElementById('fPhone').value,
+    birth: document.getElementById('fBirth').value,
+    job: document.getElementById('fJob').value,
+    status: document.getElementById('fStatus').value,
+    consultDate: document.getElementById('fDate').value,
+    products: getSelectedProducts(),
+    memo: document.getElementById('fMemo').value,
+    createdAt: editingId ? (customers.find(c=>c.id===editingId)?.createdAt || Date.now()) : Date.now(),
+    updatedAt: Date.now(),
+  }
+
+  if (editingId) {
+    const idx = customers.findIndex(c=>c.id===editingId)
+    if (idx!==-1) customers[idx] = data
+  } else {
+    customers.unshift(data)
+  }
+
+  save()
+  closePanel()
+  renderList()
+  showToast(editingId ? '✅ 수정되었습니다' : '✅ 고객이 추가되었습니다')
+}
+
+function deleteCustomer(id) {
+  if (!confirm('이 고객 정보를 삭제할까요?')) return
+  customers = customers.filter(c=>c.id!==id)
+  save()
+  closePanel()
+  renderList()
+  showToast('🗑️ 삭제되었습니다')
+}
+
+// ── 패널 제어 ──
+let currentPanel = null
+function openPanel(panelId) {
+  if (currentPanel) {
+    document.getElementById(currentPanel).classList.remove('show')
+  }
+  currentPanel = panelId
+  document.getElementById('overlay').classList.add('show')
+  document.getElementById(panelId).classList.add('show')
+  document.body.style.overflow = 'hidden'
+}
+function closePanel() {
+  if (currentPanel) document.getElementById(currentPanel).classList.remove('show')
+  document.getElementById('overlay').classList.remove('show')
+  document.body.style.overflow = ''
+  currentPanel = null
+}
+
+// ── 필터/정렬 ──
+function setFilter(el) {
+  document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'))
+  el.classList.add('active')
+  currentFilter = el.dataset.filter
+  renderList()
+}
+function setSort(el) {
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'))
+  el.classList.add('active')
+  currentSort = el.dataset.sort
+  renderList()
+}
+
+// ── 내보내기/가져오기 ──
+function exportData() {
+  const blob = new Blob([JSON.stringify(customers, null, 2)], {type:'application/json'})
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = `고객정보_${today()}.json`
+  a.click()
+  showToast('📤 파일로 저장되었습니다')
+}
+function importData() { document.getElementById('importFile').click() }
+function handleImport(input) {
+  const file = input.files[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result)
+      if (!Array.isArray(data)) throw new Error()
+      if (!confirm(`${data.length}명의 고객 정보를 가져올까요? 기존 데이터는 유지됩니다.`)) return
+      const ids = new Set(customers.map(c=>c.id))
+      data.forEach(c => { if (!ids.has(c.id)) customers.push(c) })
+      save(); renderList()
+      showToast(`✅ ${data.length}명 가져오기 완료`)
+    } catch { showToast('❌ 올바른 파일이 아닙니다') }
+  }
+  reader.readAsText(file)
+  input.value = ''
+}
+
+// ── 토스트 ──
+function showToast(msg) {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.classList.add('show')
+  setTimeout(() => t.classList.remove('show'), 2200)
+}
+
+// ── 설치 배너 ──
+function hideInstall() {
+  document.getElementById('installBanner').style.display = 'none'
+  localStorage.setItem('install_banner_shown', '1')
+}
+
+init()
+</script>
+</body>
+</html>
